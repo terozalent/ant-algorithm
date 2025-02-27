@@ -1,1 +1,1 @@
-# ant-alogithm
+# ant-algorithm
