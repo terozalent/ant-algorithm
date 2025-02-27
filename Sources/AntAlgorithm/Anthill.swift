@@ -1,23 +1,24 @@
-public struct Mrowisko {
-  public let LICZBA_MROWEK: Int
-  public var mrowki: [Mrowka]
+/// Represents an anthill containing multiple ants.
+public struct Anthill {
+    public let numberOfAnts: Int
+    public var ants: [Ant]
 
-  init(_ swiat: Swiat, _ liczba_mrowek: Int, _ pheromone: Double) {
-    self.LICZBA_MROWEK = liczba_mrowek
-    self.mrowki = Array(repeating: Mrowka(swiat, pheromone), count: LICZBA_MROWEK)
-  }
-
-  public func wszystkieMrowkiSyte() -> Bool {
-    var bool = true
-    for mrowka in mrowki {
-      bool = bool && !mrowka.dlugosc_sciezek.isEmpty
+    /// Initializes an anthill with a given number of ants.
+    init(world: World, numberOfAnts: Int, pheromone: Double) {
+        self.numberOfAnts = numberOfAnts
+        self.ants = Array(repeating: Ant(world: world, pheromoneAmount: pheromone), count: numberOfAnts)
     }
-    return bool
-  }
 
-  mutating public func move() {
-    for i in 0..<LICZBA_MROWEK {
-      mrowki[i].dzialaj()
+    /// Checks if all ants have completed their path.
+    public func areAllAntsSatiated() -> Bool {
+        return ants.allSatisfy { !$0.pathLengths.isEmpty }
     }
-  }
+
+    /// Moves all ants within the anthill.
+    public mutating func move() {
+        for i in 0..<numberOfAnts {
+            ants[i].act()
+        }
+    }
 }
+

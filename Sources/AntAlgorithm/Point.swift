@@ -1,6 +1,6 @@
-public struct Punkt {
-  public var nazwa: Character
+public struct Point {
+  public var name: Character
   public var x: Int
   public var y: Int
-  public var ilosc_feromonu: Double
+  public var pheromoneAmount: Double
 }

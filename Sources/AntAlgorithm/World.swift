@@ -1,33 +1,32 @@
-public class Swiat {
-  public var punkty: [Punkt]
-  public var aux: [Auxil]
-  public var dom: Character
-  public var pokarm: Character
-  public var punkty_do_wyboru: Int
-  public var zanik_feromonu: Double
-  let graf: [(Character, Int, Int)] = [
-    ("a", 6, 1), ("b", 13, 1), ("c", 4, 3), ("d", 4, 5), ("e", 8, 5),
-    ("f", 6, 8), ("g", 10, 8),
-  ]
+/// Represents the world in which ants navigate.
+public class World {
+    public var points: [Point]
+    public var auxiliary: [Auxiliary]
+    public var home: Character
+    public var food: Character
+    public var pointsToChoose: Int
+    public var pheromoneDecay: Double
+    
+    private let graph: [(Character, Int, Int)] = [
+        ("a", 6, 1), ("b", 13, 1), ("c", 4, 3), ("d", 4, 5), ("e", 8, 5),
+        ("f", 6, 8), ("g", 10, 8)
+    ]
 
-  init(
-    _ dom: Character, _ pokarm: Character, _ punkty_do_wyboru: Int, _ zanik_feromonu: Double
-  ) {
-    self.dom = dom
-    self.pokarm = pokarm
-    self.punkty_do_wyboru = punkty_do_wyboru
-    self.zanik_feromonu = zanik_feromonu
-    self.punkty =
-      graf
-      .map { (nazwa, x, y) in
-        Punkt(nazwa: nazwa, x: x, y: y, ilosc_feromonu: 0.0)
-      }
-    self.aux = Array(repeating: Auxil(nazwa: "\0", stosunek: 0.0), count: graf.count)
-  }
-
-  func pheromoneReset() {
-    for i in 0..<punkty.count {
-      punkty[i].ilosc_feromonu -= punkty[i].ilosc_feromonu * zanik_feromonu
+    /// Initializes the world with given parameters.
+    init(home: Character, food: Character, pointsToChoose: Int, pheromoneDecay: Double) {
+        self.home = home
+        self.food = food
+        self.pointsToChoose = pointsToChoose
+        self.pheromoneDecay = pheromoneDecay
+        self.points = graph.map { Point(name: $0.0, x: $0.1, y: $0.2, pheromoneAmount: 0.0) }
+        self.auxiliary = Array(repeating: Auxiliary(name: "\0", ratio: 0.0), count: graph.count)
     }
-  }
+
+    /// Reduces the pheromone level over time.
+    public func resetPheromone() {
+        for i in 0..<points.count {
+            points[i].pheromoneAmount -= points[i].pheromoneAmount * pheromoneDecay
+        }
+    }
 }
+

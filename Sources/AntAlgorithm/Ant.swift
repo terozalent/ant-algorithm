@@ -1,113 +1,109 @@
 import Foundation
 
-public struct Mrowka {
-  let MAX = 1e6
-  public var swiat: Swiat
-  public var polozenie: Character
-  public var ilosc_wydzielanego_feromonu: Double
-  var dlugosc_sciezek: [Int] = []
-  var sciezka: String
-  var syta = false
+/// Represents an individual ant in the simulation.
+public struct Ant {
+    private let max = 1e6
+    public var world: World
+    public var position: Character
+    public var pheromoneAmount: Double
+    public var pathLengths: [Int] = []
+    private var path: String
+    private var satiated = false
 
-  init(_ swiat: Swiat, _ ilosc_wydzielanego_feromonu: Double) {
-    self.swiat = swiat
-    self.polozenie = swiat.dom
-    self.ilosc_wydzielanego_feromonu = ilosc_wydzielanego_feromonu
-    self.sciezka = String(swiat.dom)
-  }
+    /// Initializes a new ant within the given world.
+    /// - Parameters:
+    ///   - world: The world in which the ant exists.
+    ///   - pheromoneAmount: The amount of pheromone the ant deposits.
+    init(world: World, pheromoneAmount: Double) {
+        self.world = world
+        self.position = world.home
+        self.pheromoneAmount = pheromoneAmount
+        self.path = String(world.home)
+    }
 
-  private func obliczOdleglosc() {
-    let polozenie = Int(polozenie.asciiValue! - Character("a").asciiValue!)
-    let dom = Int(swiat.dom.asciiValue! - Character("a").asciiValue!)
-    var dx: Int
-    var dy: Int
-    for i in 0..<swiat.punkty.count {
-      if i == dom || i == polozenie || sciezka.contains(swiat.punkty[i].nazwa) {
-        swiat.aux[i].stosunek = MAX
-      } else {
-        dx =
-          swiat.punkty[
-            polozenie
-          ].x - swiat.punkty[i].x
-        dy =
-          swiat.punkty[
-            polozenie
-          ].y - swiat.punkty[i].y
-        swiat.aux[i].stosunek = sqrt(Double(dx * dx + dy * dy))
-      }
+    /// Calculates the distances to all available points in the world.
+    private func calculateDistance() {
+        let positionIndex = Int(position.asciiValue! - Character("a").asciiValue!)
+        let homeIndex = Int(world.home.asciiValue! - Character("a").asciiValue!)
+        
+        for i in 0..<world.points.count {
+            if i == homeIndex || i == positionIndex || path.contains(world.points[i].name) {
+                world.auxiliary[i].ratio = max
+            } else {
+                let dx = world.points[positionIndex].x - world.points[i].x
+                let dy = world.points[positionIndex].y - world.points[i].y
+                world.auxiliary[i].ratio = sqrt(Double(dx * dx + dy * dy))
+            }
+        }
     }
-  }
 
-  private func sortujTablicePomocnicza() {
-    for i in 0..<swiat.punkty.count {
-      swiat.aux[i].stosunek = (swiat.punkty[i].ilosc_feromonu + 1) / swiat.aux[i].stosunek
+    /// Sorts the auxiliary array based on pheromone influence.
+    private func sortAuxiliaryArray() {
+        for i in 0..<world.points.count {
+            world.auxiliary[i].ratio = (world.points[i].pheromoneAmount + 1) / world.auxiliary[i].ratio
+        }
+        world.auxiliary.sort { $0.ratio >= $1.ratio }
     }
-    swiat.aux.sort(by: { $0.stosunek >= $1.stosunek })
-  }
 
-  private func losuj() -> Int {
-    return (Int.random(in: 0..<swiat.punkty_do_wyboru))
-  }
+    /// Selects a random point index.
+    private func randomChoice() -> Int {
+        return Int.random(in: 0..<world.pointsToChoose)
+    }
 
-  private func ruletka() -> Int {
-    var pomocnicza = [Double](repeating: 0.0, count: swiat.punkty_do_wyboru)
-    var suma = 0.0
-    for i in 0..<swiat.punkty_do_wyboru {
-      suma += swiat.aux[i].stosunek
+    /// Implements a roulette selection process for movement.
+    private func roulette() -> Int {
+        var auxiliaryArray = [Double](repeating: 0.0, count: world.pointsToChoose)
+        var sum = world.auxiliary.prefix(world.pointsToChoose).reduce(0) { $0 + $1.ratio }
+        
+        for i in 0..<world.pointsToChoose {
+            auxiliaryArray[i] = world.auxiliary[i].ratio / sum
+        }
+        
+        var i = 0
+        let random = Double.random(in: 0.0..<1.0)
+        sum = auxiliaryArray[i]
+        while random > sum {
+            i += 1
+            sum += auxiliaryArray[i]
+        }
+        return i
     }
-    for i in 0..<swiat.punkty_do_wyboru {
-      pomocnicza[i] = swiat.aux[i].stosunek / suma
-    }
-    var i = 0
-    let random = Double.random(in: 0.0..<1.0)
-    suma = pomocnicza[i]
-    while random > suma {
-      i += 1
-      suma += pomocnicza[i]
-    }
-    return i
-  }
 
-  public func wybierzPunkt() -> Int {
-    for i in 0..<swiat.punkty.count {
-      swiat.aux[i].nazwa = swiat.punkty[i].nazwa
+    /// Determines the next movement of the ant.
+    public mutating func act() {
+        let choice = choosePoint()
+        if world.auxiliary[choice].name != world.food {
+            position = world.auxiliary[choice].name
+            path.append(position)
+        } else {
+            satiated = true
+            position = world.food
+            path.append(position)
+            markPath()
+            pathLengths.append(path.count - 1)
+            path = "a"
+        }
     }
-    obliczOdleglosc()
-    sortujTablicePomocnicza()
-    var wybor: Int
-    var zly_wybor: Bool
-    repeat {
-      wybor = ruletka()
-      zly_wybor = sciezka.contains(swiat.aux[wybor].nazwa)
-    } while zly_wybor
-    return wybor
-  }
 
-  func polejSciezke() {
-    for Punkt in sciezka {
-      if Punkt != swiat.dom {
-        swiat.punkty[
-          Int(
-            Punkt
-              .asciiValue! - Character("a").asciiValue!)
-        ].ilosc_feromonu +=
-          ilosc_wydzielanego_feromonu
-      }
+    /// Chooses the next point for the ant to move to.
+    private func choosePoint() -> Int {
+        for i in 0..<world.points.count {
+            world.auxiliary[i].name = world.points[i].name
+        }
+        calculateDistance()
+        sortAuxiliaryArray()
+        var choice: Int
+        repeat {
+            choice = roulette()
+        } while path.contains(world.auxiliary[choice].name)
+        return choice
     }
-  }
 
-  mutating public func dzialaj() {
-    let i = wybierzPunkt()
-    if swiat.aux[i].nazwa != swiat.pokarm {
-      polozenie = swiat.aux[i].nazwa
-      sciezka += String(polozenie)
-    } else {
-      syta = true
-      polozenie = swiat.pokarm
-      sciezka += String(polozenie)
-      polejSciezke()
-      dlugosc_sciezek.append(sciezka.count - 1)
-      sciezka = "a"
+    /// Deposits pheromone along the traveled path.
+    private func markPath() {
+        for point in path where point != world.home {
+            world.points[Int(point.asciiValue! - Character("a").asciiValue!)].pheromoneAmount += pheromoneAmount
+        }
     }
-  }
 }
+
