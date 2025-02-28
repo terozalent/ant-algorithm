@@ -1,3 +1,4 @@
+/// ###Ant algorithm research performed by Szymon Gniado at AEH
 import Foundation
 
 @main
