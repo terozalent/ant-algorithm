@@ -1,29 +1,16 @@
 /// ###Ant algorithm research performed by Szymon Gniado at AEH
-import Foundation
 
-@main
-struct AntAlgorithm {
-   static func main() {
-    var pathLengths: [[Int]] = []
-    print("| pheromone decay | average path length |")
-    print("| :---: | :---: |")
-    for _ in 0...100 {
-      for _ in 1...100 {
-        let world = World(
-          home: "a", food: "g",pointsToChoose: 2,pheromoneDecay: 0)
-        var anthill = Anthill(world: world, numberOfAnts: 24,pheromone: 2)
-        while !anthill.areAllAntsSatiated(){
-          world.resetPheromone()
-          anthill.move()
-        }
-        pathLengths.append(anthill.ants.map { $0.pathLengths }.flatMap { $0 })
-      }
-      let flatPathLengths = pathLengths.flatMap { $0 }
-      let averagePathLength =
-        pathLengths.isEmpty
-        ? 0
-        : Double(flatPathLengths.reduce(0, +)) / Double(flatPathLengths.count)
-      print("| 0% | \(averagePathLength) |")
+/// Starts a simulation, by creating the `World` and the `Anthill`, and looping until all the ants are satisfied.
+/// - Parameters:
+///     - pointsToChoose: The number of `Point`s an `Ant` can choose to go to.
+///     - pheromoneDecay: The ratio of `pheromone` decay speed.
+///     - numberOfAnts: The number of the `Ant`s in the `Anthill`.
+///     - pheromone: The amount of `pheromone` is produced by the `Ant`s after finding the `food`.
+public func start(pointsToChoose: Int, pheromoneDecay: Double, numberOfAnts: Int, pheromone: Double) {
+    let world =  World(home: "a", food: "g", pointsToChoose: pointsToChoose, pheromoneDecay: pheromoneDecay)
+    var anthill = Anthill(world: world, numberOfAnts: numberOfAnts, pheromone: pheromone)
+    while !anthill.areAllAntsSatiated() {
+        world.resetPheromone()
+        anthill.move()
     }
-   }
 }
